@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Lido file uploader">
+</head>
+
+<body>
+    <h1>File Upload</h1>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".ttl, .json, .xml" required>
+        <button type="submit">Upload</button>
+    </form>
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    {% if success %}
+        <p style="color: green;">{{ success }}</p>
+    {% endif %}
+</body>
+
+</html>
