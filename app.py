@@ -5,10 +5,10 @@ from pathlib import Path
 
 app = Flask(__name__,template_folder='templates', static_folder='static', static_url_path='/assets')
 
-def import_file(filename:Flask):
+def import_file(src_file:str, work_file:str):
     # Simulate file import
-    print(f"Importing {filename}")
-    return (f'Import ok',None)
+    print(f"Importing {src_file}")
+    return (f'Importing {src_file} ok',None)
 
 @app.route('/')
 def index():
@@ -18,9 +18,10 @@ def index():
 def upload():
     err_msg = 'Import failed'
     if storage_file:=request.files['file']:
-        workFile = f'./upload{Path(storage_file.filename).suffix}'
-        storage_file.save(workFile)
-        success_msg,err_msg = import_file(workFile)
+        src_file = storage_file.filename
+        work_file = f'./upload{Path(src_file).suffix}'
+        storage_file.save(work_file)
+        success_msg,err_msg = import_file(src_file,work_file)
     # Handle file upload here
     return render_template('index.html',success=success_msg,error=err_msg)
 

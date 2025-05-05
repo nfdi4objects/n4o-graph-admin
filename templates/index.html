@@ -13,19 +13,48 @@
   </head>
 
 <body>
-    <h1>File Upload</h1>
-    <form action="/upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="file" accept=".ttl, .json, .xml" required>
-        <button type="submit">Upload</button>
-    </form>
+    <!-- Upload dialog for X3ML files (modal)-->
+    <div class="modal fade" id="uploadX3mlModal" tabindex="-1" aria-labelledby="uploadX3mlModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="uploadX3mlModalLabel">Uploading X3ml mappings</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form action="/upload" method="post" enctype="multipart/form-data">
+                <div class="input-group mb-3">
+                  <input type="file" class="form-control" name="file" accept=".ttl, .json, .xml" required />&nbsp;
+                  <input type="submit" class="btn btn-primary" data-bs-dismiss="modal" value="Open" />
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="alert alert-info" role="alert">
+        <h4 class="alert-heading">Welcome to the N4O-KG Uploader!</h4>
+        <hr>
+        <div class="mb-3">
+          <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadX3mlModal">Upload</button>
+        </div>
+        {% if error %}      
+        <div class="mb-3">
+          <label for="ETA1" class="form-label">Error:</label>
+          <textarea class="form-control" id="ETA1" rows="5">{{ error }}</textarea>
+        </div>      
+        {% endif %}
 
-    {% if error %}
-        <p style="color: red;">{{ error }}</p>
-    {% endif %}
-
-    {% if success %}
-        <p style="color: green;">{{ success }}</p>
-    {% endif %}
-</body>
+        {% if success %}
+        <div class="mb-3">
+          <label for="RTA1" class="form-label">Result:</label>
+          <textarea class="form-control" id="RTA1" rows="5">{{ success }}</textarea>
+        </div>      
+        {% endif %}
+      </div>
+  </body>
 
 </html>
