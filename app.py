@@ -3,7 +3,7 @@ from waitress import serve
 import argparse as AP
 from pathlib import Path
 
-app = Flask(__name__)
+app = Flask(__name__,template_folder='templates', static_folder='static', static_url_path='/assets')
 
 def import_file(filename:Flask):
     # Simulate file import

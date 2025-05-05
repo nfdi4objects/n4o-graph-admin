@@ -172,5 +172,5 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
-upload.ttl
-upload.xml
+upload.*
+static/node_modules/
