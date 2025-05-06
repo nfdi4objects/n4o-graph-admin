@@ -24,13 +24,19 @@
             <div class="modal-body">
               <form action="/upload" method="post" enctype="multipart/form-data">
                 <div class="input-group mb-3">
-                  <input type="file" class="form-control" name="file" accept=".ttl, .json, .xml" required />&nbsp;
-                  <input type="submit" class="btn btn-primary" data-bs-dismiss="modal" value="Open" />
+                  <input type="file" class="form-control" name="file" accept=".ttl, .json, .xml" required />
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon3">Collection</span>
+                    <input type="text" class="form-control"  name="collection" aria-describedby="basic-addon3" value="{{collection}}" />
+                 </div> 
+                <div class="input-group mb-3">
+                  <input type="submit" class="btn btn-primary" data-bs-dismiss="modal" value="Submit" />&nbsp;
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Dimiss</button>
                 </div>
               </form>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
           </div>
         </div>
