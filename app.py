@@ -2,6 +2,9 @@ from flask import Flask, render_template, request
 from waitress import serve
 import argparse as AP
 from pathlib import Path
+import requests
+
+sparql_url = 'http://172.18.0.3:3030/n4o/'
 
 app = Flask(__name__,template_folder='templates', static_folder='static', static_url_path='/assets')
 
@@ -10,6 +13,16 @@ def is_RDF_suffix(suffix:str):
 
 def import_file(src_file:str, work_file:str, collection='unspecified'):
     # Simulate file import
+    #query = 'PREFIX schema: <http://schema.org/> SELECT ?graph ?name (count(*) as ?triples) {  GRAPH ?graph {?s ?p ?o}  OPTIONAL { ?graph schema:name ?name }} GROUP BY ?graph ?name ORDER BY DESC(?triples)'
+    #response =requests.post(sparql_url, data={'query': query})
+    with open(work_file, 'rb') as file:
+        # Create a dictionary with the file data
+        files = {'file': (work_file, file, 'text/plain')}
+        response = requests.post(sparql_url, files=files, params={'graph': 'n4o:testc'})
+
+    print(response.status_code)
+    print(response.text)
+    
     return (f'Importing {src_file} into {collection} - Ok',None)
 
 @app.route('/')
