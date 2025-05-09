@@ -2,23 +2,23 @@ from flask import Flask, render_template, request
 from waitress import serve
 import argparse as AP
 from pathlib import Path
-import requests
+import requests, yaml
 
-sparql_url = 'http://172.18.0.3:3030/n4o/'
+sparql_url = 'http://172.18.0.4:3030/n4/'
 
 app = Flask(__name__,template_folder='templates', static_folder='static', static_url_path='/assets')
 
 def is_RDF_suffix(suffix:str):
     return suffix.lower() in ['.ttl', '.nt', '.nq', '.jsonld', '.json', '.rdf', '.xml']
 
-def import_file(src_file:str, work_file:str, collection='unspecified'):
+def import_file(src_file:str, work_file:str, collection='default'):
     # Simulate file import
     #query = 'PREFIX schema: <http://schema.org/> SELECT ?graph ?name (count(*) as ?triples) {  GRAPH ?graph {?s ?p ?o}  OPTIONAL { ?graph schema:name ?name }} GROUP BY ?graph ?name ORDER BY DESC(?triples)'
     #response =requests.post(sparql_url, data={'query': query})
     with open(work_file, 'rb') as file:
         # Create a dictionary with the file data
         files = {'file': (work_file, file, 'text/plain')}
-        response = requests.post(sparql_url, files=files, params={'graph': 'n4o:testc'})
+        response = requests.post(sparql_url, files=files, params={'graph': f'n4o:{collection}'})
 
     print(response.status_code)
     print(response.text)
@@ -60,8 +60,17 @@ if __name__ == '__main__':
     parser = AP.ArgumentParser()
     parser.add_argument('-w', '--wsgi', action=AP.BooleanOptionalAction, help="Use WSGI server")
     parser.add_argument('-p', '--port', type=int, default=5010, help="Server port")
+    parser.add_argument('-c', '--config', type=str, default="config.yaml", help="Config file")
     args = parser.parse_args()
     opts = {"port": args.port}
+
+    try:
+        with open(args.config) as stream:
+            data = yaml.safe_load(stream)
+            sparql_url = data["fuseki-server"]["uri"]
+    except yaml.YAMLError as err:
+        quit(str(err))
+
 
     if args.wsgi:
         serve(app, host="0.0.0.0", **opts)

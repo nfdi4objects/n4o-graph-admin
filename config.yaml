@@ -1,0 +1,2 @@
+fuseki-server:
+  uri: "http://172.18.0.4:3030/n4o/"
