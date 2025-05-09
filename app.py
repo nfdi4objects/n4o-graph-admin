@@ -20,10 +20,9 @@ def import_file(src_file:str, work_file:str, collection='default'):
         files = {'file': (work_file, file, 'text/plain')}
         response = requests.post(sparql_url, files=files, params={'graph': f'n4o:{collection}'})
 
-    print(response.status_code)
-    print(response.text)
+    msg = f'answer={response.text}'
     
-    return (f'Importing {src_file} into {collection} - Ok',None)
+    return (f'Importing {src_file} into {collection} - Ok\n{msg}',None)
 
 @app.route('/')
 def index():
