@@ -50,14 +50,14 @@
         {% if error %}      
         <div class="mb-3">
           <label for="ETA1" class="form-label">Error:</label>
-          <textarea class="form-control" id="ETA1" rows="5">{{ error }}</textarea>
+          <textarea class="form-control" id="ETA1" rows="5" readonly >{{ error }}</textarea>
         </div>      
         {% endif %}
 
         {% if success %}
         <div class="mb-3">
           <label for="RTA1" class="form-label">Result:</label>
-          <textarea class="form-control" id="RTA1" rows="5">{{ success }}</textarea>
+          <textarea class="form-control" id="RTA1" rows="5" readonly >{{ success }}</textarea>
         </div>      
         {% endif %}
       </div>

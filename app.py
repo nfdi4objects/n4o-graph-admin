@@ -11,19 +11,12 @@ app = Flask(__name__,template_folder='templates', static_folder='static', static
 def is_RDF_suffix(suffix:str):
     return suffix.lower() in ['.ttl', '.nt', '.nq', '.jsonld', '.json', '.rdf', '.xml']
 
-def import_file(src_file:str, work_file:str, collection='default'):
-    # Simulate file import
-    #query = 'PREFIX schema: <http://schema.org/> SELECT ?graph ?name (count(*) as ?triples) {  GRAPH ?graph {?s ?p ?o}  OPTIONAL { ?graph schema:name ?name }} GROUP BY ?graph ?name ORDER BY DESC(?triples)'
-    #response =requests.post(sparql_url, data={'query': query})
-    with open(work_file, 'rb') as file:
-        # Create a dictionary with the file data
-        files = {'file': (work_file, file, 'text/plain')}
-        response = requests.post(sparql_url, files=files, params={'graph': f'n4o:{collection}'})
-
-    print(response.status_code)
-    print(response.text)
+def import_file(fs, collection='default'):
+    files = {'file': (fs.filename, fs, 'text/plain')}
+    response = requests.post(sparql_url, files=files, params={'graph': f'n4o:{collection}'})
+    msg = f'answer={response.text}'
     
-    return (f'Importing {src_file} into {collection} - Ok',None)
+    return (f'Importing {fs.filename} into {collection} - Ok\n{msg}',None)
 
 @app.route('/')
 def index():
@@ -36,11 +29,8 @@ def upload():
     err_msg = 'Import failed'
     global collection_name
     if storage_file:=request.files['file']:
-        src_file = storage_file.filename
-        work_file = f'./upload{Path(src_file).suffix}'
-        storage_file.save(work_file)
         collection_name = request.form['collection'] or 'Default'
-        success_msg,err_msg = import_file(src_file,work_file,collection_name)
+        success_msg,err_msg = import_file(storage_file,collection_name)
     # Handle file upload here
     return render_template('index.html',success=success_msg,error=err_msg, collection=collection_name)
 
