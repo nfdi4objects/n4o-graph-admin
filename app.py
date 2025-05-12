@@ -11,39 +11,31 @@ app = Flask(__name__,template_folder='templates', static_folder='static', static
 def is_RDF_suffix(suffix:str):
     return suffix.lower() in ['.ttl', '.nt', '.nq', '.jsonld', '.json', '.rdf', '.xml']
 
-def import_file(fs, collection='default'):
-    files = {'file': (fs.filename, fs, 'text/plain')}
+def import_file(storage_file, collection='default'):
+    files = {'file': (storage_file.filename, storage_file, 'text/plain')}
     response = requests.post(sparql_url, files=files, params={'graph': f'n4o:{collection}'})
-    msg = f'answer={response.text}'
-    
-    return (f'Importing {fs.filename} into {collection} - Ok\n{msg}',None)
+    return (f'Importing {storage_file.filename} into {collection} - Ok\nanswer={response.text}',None)
 
 @app.route('/')
 def index():
-    return render_template('index.html',collection=collection_name)
+    return render_template('index.html',collection=collection_name_form)
 
-collection_name ='default'
+collection_name_form ='default'
 
 @app.route('/upload', methods=['POST'])
 def upload():
     err_msg = 'Import failed'
-    global collection_name
-    if storage_file:=request.files['file']:
-        collection_name = request.form['collection'] or 'Default'
-        success_msg,err_msg = import_file(storage_file,collection_name)
-    # Handle file upload here
-    return render_template('index.html',success=success_msg,error=err_msg, collection=collection_name)
+    global collection_name_form
+    if storage_file:=request.files.get('file'):
+        collection_name_form = request.form['collection'] or 'Default'
+        success_msg,err_msg = import_file(storage_file,collection_name_form)
+    return render_template('index.html',success=success_msg,error=err_msg, collection=collection_name_form)
 
 @app.route('/uploadC/<collection>', methods=['POST'])
 def uploadC(collection):
     success_msg = 'Import failed'
     if storage_file:=request.files['file']:
-        src_file = Path(storage_file.filename)
-        if is_RDF_suffix(src_file.suffix):
-            work_file = f'./upload{src_file.suffix}'
-            storage_file.save(work_file)
-            success_msg,_ = import_file(src_file,work_file,collection)
-    # Handle file upload here
+        success_msg,_ = import_file(storage_file,collection)
     return f'message:{success_msg}'
 
 if __name__ == '__main__':
