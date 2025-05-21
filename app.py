@@ -1,15 +1,14 @@
 from flask import Flask, render_template, redirect, request, make_response, url_for
 from waitress import serve
 import argparse as AP
-from pathlib import Path
-import requests, yaml
+import requests, yaml, hashlib
 
 sparql_url = 'http://172.18.0.4:3030/n4/'
 
 app = Flask(__name__,template_folder='templates', static_folder='static', static_url_path='/assets')
 app.secret_key = 'your_secret_key'  # Replace with a strong secret key
 user_collection_name ={'admin':'default','user1':'default_1','guest':'default_2'}
-users = {'admin': 'admin123', 'user1': 'user1', 'guest': 'guest1'}
+users = []
 
 
 def is_RDF_suffix(suffix:str):
@@ -59,8 +58,9 @@ def home():
 def login():
     if request.method == 'POST':
         username = request.form['username']
-        password = request.form['password']
-        if username in users and users[username] == password:
+        user = [u for u in users if u['username'] == username]
+        pw = hashlib.md5(request.form['password'].encode()).hexdigest()
+        if user and user[0]['password'] == pw:
             response = make_response(redirect(url_for('home')))
             response.set_cookie('username', username)
             return response
@@ -75,6 +75,11 @@ def logout():
     response.delete_cookie('username')
     return response
 
+def read_yaml(fname):
+  with open(fname, 'r') as f:
+    config = yaml.safe_load(f)
+    return config
+
 if __name__ == '__main__':
     parser = AP.ArgumentParser()
     parser.add_argument('-w', '--wsgi', action=AP.BooleanOptionalAction, help="Use WSGI server")
@@ -84,9 +89,10 @@ if __name__ == '__main__':
     opts = {"port": args.port}
 
     try:
-        with open(args.config) as stream:
-            data = yaml.safe_load(stream)
-            sparql_url = data["fuseki-server"]["uri"]
+        config_data = read_yaml(args.config)
+        sparql_url = config_data["fuseki-server"]["uri"]
+        user_data = read_yaml('users.yaml')
+        users =user_data['users']
     except yaml.YAMLError as err:
         quit(str(err))
 
