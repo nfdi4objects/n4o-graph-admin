@@ -1,5 +1,5 @@
-# n4o-uploader-ws
-Web service for uploading RDF and LIDO files for import into the N4O Knowledge Graph.
+# n4o-graph-admin
+Web service for administration of the N4O Knowledge Graph.
 
 ## See Also
 
