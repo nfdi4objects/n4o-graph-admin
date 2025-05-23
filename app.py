@@ -5,7 +5,7 @@ import requests
 import yaml
 import hashlib
 
-sparql_url = 'http://172.18.0.4:3030/n4/'
+sparql_url = 'http://fuseki:3030/'
 
 app = Flask(__name__, template_folder='templates', static_folder='static', static_url_path='/assets')
 app.secret_key = 'your_secret_key'  # Replace with a strong secret key
