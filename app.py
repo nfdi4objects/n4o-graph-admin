@@ -5,7 +5,7 @@ import requests
 import yaml
 import hashlib
 
-sparql_url = 'http://fuseki:3030/'
+sparql_url = 'http://fuseki:3030/n4o'
 
 app = Flask(__name__, template_folder='templates', static_folder='static', static_url_path='/assets')
 app.secret_key = 'your_secret_key'  # Replace with a strong secret key
@@ -41,7 +41,7 @@ def import_file(storage_file, collection='default'):
 @app.route('/info')
 def info():
     '''Display information about the RDF store and users'''
-    return f'Info: {sparql_url} user= {[k['username'] for k,_ in users]}'
+    return f'Info\nSPARQL = {sparql_url}\nUsers = {[k['username'] for k in users]}\n'
 
 
 @app.route('/upload', methods=['POST'])
@@ -103,12 +103,13 @@ def logout():
     response.delete_cookie('username')
     return response
 
+import os
 
 def read_yaml(fname):
     '''Read a YAML file and return the data'''
-    with open(fname, 'r') as f:
-        config = yaml.safe_load(f)
-        return config
+    if os.path.exists(fname) :
+        with open(fname, 'r') as f:
+            return yaml.safe_load(f)
 
 
 if __name__ == '__main__':
@@ -119,9 +120,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     opts = {"port": args.port}
 
-    try:
-        config_data = read_yaml(args.config)
+    if config_data := read_yaml(args.config):
         sparql_url = config_data["fuseki-server"]["uri"]
+    try:
         user_data = read_yaml('users.yaml')
         users = user_data['users']
     except yaml.YAMLError as err:
