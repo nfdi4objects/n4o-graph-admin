@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, redirect, request, make_response, url_for
 from waitress import serve
 import argparse as AP
@@ -103,11 +104,10 @@ def logout():
     response.delete_cookie('username')
     return response
 
-import os
 
 def read_yaml(fname):
     '''Read a YAML file and return the data'''
-    if os.path.exists(fname) :
+    if os.path.exists(fname):
         with open(fname, 'r') as f:
             return yaml.safe_load(f)
 
@@ -122,11 +122,11 @@ if __name__ == '__main__':
 
     if config_data := read_yaml(args.config):
         sparql_url = config_data["fuseki-server"]["uri"]
-    try:
-        user_data = read_yaml('users.yaml')
+
+    if user_data := read_yaml('users.yaml'):
         users = user_data['users']
-    except yaml.YAMLError as err:
-        quit(str(err))
+    else:
+        quit(stderr='No users found in users.yaml')
 
     if args.wsgi:
         serve(app, host="0.0.0.0", **opts)
