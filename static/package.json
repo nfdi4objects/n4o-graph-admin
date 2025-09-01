@@ -11,7 +11,8 @@
   "dependencies": {
     "bootstrap": "^5.3.5",
     "jquery": "^3.7.1",
-    "node": "^23.11.0"
+    "node": "^23.11.0",
+    "ace-builds": "^1.39.1"
   },
   "description": ""
 }

@@ -1,0 +1,17 @@
+.container {
+  width: 90%; 
+}
+
+#lidoEditor {
+  height: 500px;
+  width: 100%; /* Adjust width as needed */
+  font-size: 14px;
+  font-family: monospace;
+}
+
+#rdfEditor {
+    height: 500px;
+    width: 100%; /* Adjust width as needed */
+    font-size: 14px;
+    font-family: monospace;
+  }

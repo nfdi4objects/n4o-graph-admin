@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, redirect, request, make_response, url_for
+from flask import Flask, render_template, redirect, request, make_response, url_for, jsonify
 from waitress import serve
 import argparse as AP
 import requests
@@ -76,7 +76,9 @@ def home():
         coll = 'default'
         if user := find_user(username):
             coll = user['collection'] or 'default'
-        return render_template('index.html', collection=coll)
+        with open('./data/'+user['samplefile']) as f:   
+            user['profile_data'] = f.read()
+        return render_template('index.html', collection=coll, user=jsonify(user).json)
     else:
         return redirect(url_for('login'))
 
@@ -92,7 +94,7 @@ def login():
             response.set_cookie('username', username)
             return response
         else:
-            return 'Invalid username or password'
+            return render_template('login.html')
     else:
         return render_template('login.html')
 
@@ -119,6 +121,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--config', type=str, default="config.yaml", help="Config file")
     args = parser.parse_args()
     opts = {"port": args.port}
+    
 
     if config_data := read_yaml(args.config):
         sparql_url = config_data["fuseki-server"]["uri"]
@@ -127,8 +130,9 @@ if __name__ == '__main__':
         users = user_data['users']
     else:
         quit(stderr='No users found in users.yaml')
-
+        
     if args.wsgi:
+        opts['url_scheme'] = 'https'
         serve(app, host="0.0.0.0", **opts)
     else:
         app.run(host="0.0.0.0", **opts)

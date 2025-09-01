@@ -1,64 +1,98 @@
 <!doctype html>
 
 <head>
-    <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Lido file uploader">
-    <script src="assets/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/node_modules/jquery/dist/jquery.min.js"></script>
-    <link rel="stylesheet" href="assets/node_modules/bootstrap/dist/css/bootstrap.min.css">
-    <title>RDF/Lido Uploader</title>
-  </head>
+  <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Administration interface for the N4O Knowledge Graph">
+
+  <script src="assets/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/node_modules/jquery/dist/jquery.min.js"></script>
+  <script src="assets/node_modules/ace-builds/src-min/ace.js"></script>
+
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="assets/node_modules/bootstrap/dist/css/bootstrap.min.css">
+
+  <title>Knowledge Graph Workshop</title>
+</head>
 
 <body>
-    <!-- Upload dialog for X3ML files (modal)-->
-    <div class="modal fade" id="uploadX3mlModal" tabindex="-1" aria-labelledby="uploadX3mlModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="uploadX3mlModalLabel">Uploading X3ml mappings</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <form action="/upload" method="post" enctype="multipart/form-data">
-                <div class="input-group mb-3">
-                  <input type="file" class="form-control" name="file" accept=".ttl, .json, .xml" required />
-                </div>
-                <div class="input-group mb-3">
-                    <span class="input-group-text" id="basic-addon3">Collection</span>
-                    <input type="text" class="form-control"  name="collection" aria-describedby="basic-addon3" value="{{collection}}" />
-                 </div> 
-                <div class="input-group mb-3">
-                  <input type="submit" class="btn btn-primary" data-bs-dismiss="modal" value="Submit" />&nbsp;
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Dimiss</button>
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="alert alert-info" role="alert">
-        <h4 class="alert-heading">Welcome to the N4O-KG Uploader!</h4>
-        <hr>
-        <div class="mb-3">
-          <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadX3mlModal">Upload</button>
-          <a href="/logout">Log out</a>
-        </div>
-        {% if error %}      
-        <div class="mb-3">
-          <label for="ETA1" class="form-label">Error:</label>
-          <textarea class="form-control" id="ETA1" rows="5" readonly >{{ error }}</textarea>
-        </div>      
-        {% endif %}
+  <div class="alert alert-info" role="alert">
+    <h4 class="alert-heading">Hello {{user['username']}}, welcome to the N4O-KG workshop!
+       <a href="/logout">Log out</a>
+    </h4>
+    <hr>
+    <div class="mb-3">
+     
+    </div>
+    {% if error %}
+    <div class="mb-3">
+      <label for="ETA1" class="form-label">Error:</label>
+      <textarea class="form-control" id="ETA1" rows="5" readonly>{{ error }}</textarea>
+    </div>
+    {% endif %}
 
-        {% if success %}
-        <div class="mb-3">
-          <label for="RTA1" class="form-label">Result:</label>
-          <textarea class="form-control" id="RTA1" rows="5" readonly >{{ success }}</textarea>
-        </div>      
-        {% endif %}
+    {% if success %}
+    <div class="mb-3">
+      <label for="RTA1" class="form-label">Result:</label>
+      <textarea class="form-control" id="RTA1" rows="5" readonly>{{ success }}</textarea>
+    </div>
+    {% endif %}
+  </div>
+  <div id="app" class=".container-fluid" user_data="{{ user['profile_data'] }}">
+    <div class="row">
+      <div class="col">
+        <h4>Lido source (xml)</h4>
+        <p>
+          <button type="button" class="btn btn-primary btn-sm" onclick="getLido(1)">TODO</button>&nbsp;
+        </p>
+        <div id="lidoEditor" style="height:600px"></div>
       </div>
-  </body>
+      <div class="col">
+        <h4>RDF Output (ttl)</h4>
+        <p>
+          <button type="button" class="btn btn-success btn-sm" onclick="runMappings()">TODO</button>&nbsp;
+        </p>
+        <div id="rdfEditor" style="height:600px"></div>
+      </div>
+    </div>
+  </div>
+
+</body>
+<script>
+
+  function readTextFile(file) {
+    var rawFile = new XMLHttpRequest(); // XMLHttpRequest (often abbreviated as XHR) is a browser object accessible in JavaScript that provides data in XML, JSON, but also HTML format, or even a simple text using HTTP requests.
+    rawFile.open("GET", file, false); // open with method GET the file with the link file ,  false (synchronous)
+    rawFile.onreadystatechange = function ()
+    {
+        if(rawFile.readyState === 4) // readyState = 4: request finished and response is ready
+        {
+            if(rawFile.status === 200) // status 200: "OK"
+            {
+                var allText = rawFile.responseText; //  Returns the response data as a string
+                console.log(allText); // display text on the console
+            }
+        }
+    }
+    rawFile.send(null); //Sends the request to the server Used for GET requests with param null
+}
+
+  function makeEditor(label, style = "ace/theme/monokai", fmt = "ace/mode/xml") {
+    // Returns an ace editor object
+    var ed = ace.edit(label);
+    ed.setTheme(style);
+    ed.session.setMode(fmt);
+    ed.setPrintMarginColumn(-1);
+    return ed;
+  }
+
+  var app_elem = document.getElementById('app');
+  var user_data = app_elem.getAttribute('user_data','None');
+  // Creator editors
+  var lidoEditor = makeEditor("lidoEditor");
+  lidoEditor.setValue(user_data);
+  var rdfEditor = makeEditor("rdfEditor", "", "ace/mode/turtle");
+  rdfEditor.setValue('')
+
+ </script>
 
 </html>

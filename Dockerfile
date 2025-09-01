@@ -7,7 +7,8 @@ RUN npm init -y && npm install
 
 FROM python:3.12-slim
 WORKDIR /app
+RUN apt-get update && apt-get install -y procps
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 COPY --from=builder /app /app
-CMD [ "python3", "app.py" ]
+CMD [ "python3", "app.py", "-w" ]
