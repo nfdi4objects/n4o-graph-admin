@@ -5,6 +5,11 @@ import argparse as AP
 import requests
 import yaml
 import hashlib
+import logging
+
+logging.basicConfig(filename='app.log', level=logging.DEBUG)
+
+
 
 sparql_url = 'http://fuseki:3030/n4o'
 
@@ -73,12 +78,13 @@ def home():
     '''Render the home page'''
     if 'username' in request.cookies:
         username = request.cookies.get('username')
-        coll = 'default'
+        collection = 'default'
         if user := find_user(username):
-            coll = user['collection'] or 'default'
-        with open('./data/'+user['samplefile']) as f:   
+            collection = user['collection'] or 'default'
+        data_dir = './data/'
+        with open(data_dir+user['samplefile'],'r') as f:   
             user['profile_data'] = f.read()
-        return render_template('index.html', collection=coll, user=jsonify(user).json)
+        return render_template('index.html', collection=collection, user=jsonify(user).json)
     else:
         return redirect(url_for('login'))
 
@@ -98,13 +104,19 @@ def login():
     else:
         return render_template('login.html')
 
-
 @app.route('/logout')
 def logout():
     '''Handle user logout'''
     response = make_response(redirect(url_for('login')))
     response.delete_cookie('username')
     return response
+
+@app.route('/convert', methods=['POST'])
+def convert():
+    #app.logger.debug(f"Received request data: {request.json['data']}") 
+    #  curl -X POST  -H "Content-Type: application/json" -d '{"data":"<lido/>", "format":"nt"}' converter:5000/runMappings  
+    return requests.post('http://converter:5000/convert', data=request.json['data']).text
+
 
 
 def read_yaml(fname):
