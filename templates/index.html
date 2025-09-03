@@ -37,19 +37,20 @@
     </div>
     {% endif %}
   </div>
-  <div id="app" class=".container-fluid" user_data="{{ user['profile_data'] }}">
+  <div id="app" class=".container-fluid" user_data="{{ user['profile_data'] }}" coll_index="{{ user['index'] }}">
     <div class="row">
       <div class="col">
         <h4>Lido source (xml)</h4>
         <p>
           <button type="button" class="btn btn-primary btn-sm" onclick="reset_editors()">Reset</button>&nbsp;
+          <button type="button" class="btn btn-success btn-sm" onclick="convert_lido()">Convert</button>&nbsp;
         </p>
         <div id="lidoEditor" style="height:600px"></div>
       </div>
       <div class="col">
         <h4>RDF Output (ttl)</h4>
         <p>
-          <button type="button" class="btn btn-success btn-sm" onclick="runMappings()">Convert</button>&nbsp;
+          <button type="button" class="btn btn-success btn-sm" onclick="import_ttl()">Import</button> The collection index is {{ user['index'] }}&nbsp;
         </p>
         <div id="rdfEditor" style="height:600px"></div>
       </div>
@@ -70,6 +71,7 @@
 
   var app_elem = document.getElementById('app');
   var user_data = app_elem.getAttribute('user_data', 'None');
+  var coll_index = app_elem.getAttribute('coll_index', 'None');
   // Creator editors
   var lidoEditor = makeEditor("lidoEditor");
   var rdfEditor = makeEditor("rdfEditor", "", "ace/mode/turtle");
@@ -79,8 +81,8 @@
     rdfEditor.setValue('');
   }
 
-  function runMappings() {
-    fetch('/convert', {
+  function convert_lido() {
+    fetch('/convert_lido', {
       method: 'POST',
       headers: {
         'Accept': 'application/json, text/plain, */*',
@@ -89,7 +91,22 @@
       body: JSON.stringify({ "data": lidoEditor.getValue(), "format": "turtle" })
     })
       .then(response => response.text())
-      .then(response => rdfEditor.setValue(response))
+      .then(text => rdfEditor.setValue(text))
+      .catch(err => console.error(err))
+  }
+
+  function import_ttl(collection = "n4o") {
+    var req = {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ "data": rdfEditor.getValue(), "coll_index": coll_index })
+    }
+    fetch('/import_ttl', req)
+      .then(response => response.json())
+      .then(json => console.log(json))
       .catch(err => console.error(err))
   }
 

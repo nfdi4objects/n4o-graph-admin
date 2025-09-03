@@ -10,8 +10,10 @@ import logging
 logging.basicConfig(filename='app.log', level=logging.DEBUG)
 
 
-
 sparql_url = 'http://fuseki:3030/n4o'
+def lido2rdf_url(): return f'http://converter:5000/convert'
+def importer_url(coll): return f'http://importer:5020/collection/import/{coll}'
+
 
 app = Flask(__name__, template_folder='templates', static_folder='static', static_url_path='/assets')
 app.secret_key = 'your_secret_key'  # Replace with a strong secret key
@@ -82,7 +84,7 @@ def home():
         if user := find_user(username):
             collection = user['collection'] or 'default'
         data_dir = './data/'
-        with open(data_dir+user['samplefile'],'r') as f:   
+        with open(data_dir+user['samplefile'], 'r') as f:
             user['profile_data'] = f.read()
         return render_template('index.html', collection=collection, user=jsonify(user).json)
     else:
@@ -104,6 +106,7 @@ def login():
     else:
         return render_template('login.html')
 
+
 @app.route('/logout')
 def logout():
     '''Handle user logout'''
@@ -111,12 +114,23 @@ def logout():
     response.delete_cookie('username')
     return response
 
-@app.route('/convert', methods=['POST'])
-def convert():
-    #app.logger.debug(f"Received request data: {request.json['data']}") 
-    #  curl -X POST  -H "Content-Type: application/json" -d '{"data":"<lido/>", "format":"nt"}' converter:5000/runMappings  
-    return requests.post('http://converter:5000/convert', data=request.json['data']).text
 
+@app.route('/convert_lido', methods=['POST'])
+def convert_lido():
+    ''''Convert LIDO XML to RDF using the external service'''
+    #  curl -X POST  -H "Content-Type: application/json" -d '{"data":"<lido/>", "format":"nt"}' converter:5000/runMappings
+    return requests.post(lido2rdf_url(), data=request.json['data']).text
+
+
+@app.route('/import_ttl', methods=['POST'])
+def import_ttl():
+    ''''Import TTL data into the RDF store'''
+    if coll := request.json.get('coll_index'):
+        if data := request.json['data']:
+            with open(f'./stage/inbox/{coll}/out.ttl', 'w') as f:
+                f.write(data)
+            return requests.post(importer_url(coll)).text
+    return jsonify(message='No data or collection index provided')
 
 
 def read_yaml(fname):
@@ -133,7 +147,6 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--config', type=str, default="config.yaml", help="Config file")
     args = parser.parse_args()
     opts = {"port": args.port}
-    
 
     if config_data := read_yaml(args.config):
         sparql_url = config_data["fuseki-server"]["uri"]
@@ -142,7 +155,7 @@ if __name__ == '__main__':
         users = user_data['users']
     else:
         quit(stderr='No users found in users.yaml')
-        
+
     if args.wsgi:
         opts['url_scheme'] = 'https'
         serve(app, host="0.0.0.0", **opts)
