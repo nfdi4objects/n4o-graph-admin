@@ -42,15 +42,16 @@
       <div class="col">
         <h4>Lido source (xml)</h4>
         <p>
-          <button type="button" class="btn btn-primary btn-sm" onclick="reset_editors()">Reset</button>&nbsp;
-          <button type="button" class="btn btn-success btn-sm" onclick="convert_lido()">Convert</button>&nbsp;
+          <button type="button" class="btn btn-primary btn-sm" onclick="reset_editors()" id="REB">Reset</button>&nbsp;
+          <button type="button" class="btn btn-success btn-sm" onclick="convert_lido()" id="CLB">Convert</button>
+          <div class="spinner-border text-primary" role="status" id="SP1"></div>
         </p>
         <div id="lidoEditor" style="height:600px"></div>
       </div>
       <div class="col">
         <h4>RDF Output (ttl)</h4>
         <p>
-          <button type="button" class="btn btn-success btn-sm" onclick="import_ttl()">Import</button> The collection index is {{ user['index'] }}&nbsp;
+          <button type="button" class="btn btn-success btn-sm" onclick="import_ttl()" id="ITB">Import</button> The collection index is {{ user['index'] }}&nbsp;
         </p>
         <div id="rdfEditor" style="height:600px"></div>
       </div>
@@ -59,6 +60,7 @@
 
 </body>
 <script>
+  document.getElementById("SP1").style.display = "none";
 
   function makeEditor(label, style = "ace/theme/monokai", fmt = "ace/mode/xml") {
     // Returns an ace editor object
@@ -82,6 +84,9 @@
   }
 
   function convert_lido() {
+    document.getElementById("ITB").disabled = true;
+    document.getElementById("SP1").style.display = "inline-block";
+    rdfEditor.setValue('');
     fetch('/convert_lido', {
       method: 'POST',
       headers: {
@@ -93,7 +98,11 @@
       .then(response => response.text())
       .then(text => rdfEditor.setValue(text))
       .catch(err => console.error(err))
-  }
+      .finally(() => {
+        document.getElementById("ITB").disabled = false;
+        document.getElementById("SP1").style.display = "none";
+      });
+    }
 
   function import_ttl(collection = "n4o") {
     var req = {
