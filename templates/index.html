@@ -15,6 +15,30 @@
 </head>
 
 <body>
+  <!-- Upload dialog for X3ML files (modal)-->
+  <div class="modal fade" id="uploadFile" tabindex="-1" aria-labelledby="uploadFileLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="uploadFileLabel">Upload turtle file</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form action="javascript:;" onsubmit="uploadTurtle( this )">
+            <div class="input-group mb-3">
+              <input type="file" class="form-control" name="file" accept=".ttl" required />
+            </div>
+            <div class="input-group mb-3">
+              <input type="submit" class="btn btn-primary" data-bs-dismiss="modal" value="Submit" />&nbsp;
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Dimiss</button>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="alert alert-info" role="alert">
     <h4 class="alert-heading">Hello {{user['username']}}, welcome to the N4O-KG workshop!
       <a href="/logout">Log out</a>
@@ -43,15 +67,18 @@
         <h4>Lido source (xml)</h4>
         <p>
           <button type="button" class="btn btn-primary btn-sm" onclick="reset_editors()" id="REB">Reset</button>&nbsp;
-          <button type="button" class="btn btn-success btn-sm" onclick="convert_lido()" id="CLB">Convert</button>
-          <div class="spinner-border text-primary" role="status" id="SP1"></div>
+          <button type="button" class="btn btn-danger btn-sm" onclick="convert_lido()" id="CLB">Convert</button>
+        <div class="spinner-border text-primary" role="status" id="SP1"></div>
         </p>
         <div id="lidoEditor" style="height:600px"></div>
       </div>
       <div class="col">
         <h4>RDF Output (ttl)</h4>
         <p>
-          <button type="button" class="btn btn-success btn-sm" onclick="import_ttl()" id="ITB">Import</button> The collection index is {{ user['index'] }}&nbsp;
+          <button type="button" class="btn btn-danger btn-sm" onclick="import_ttl()" id="ITB">Import</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="rdfEditor.setValue('')" id="ITB">Clear</button>
+          <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadFile">Upload file</button>
+          The collection index is "{{ user['index'] }}"&nbsp;
         </p>
         <div id="rdfEditor" style="height:600px"></div>
       </div>
@@ -102,7 +129,7 @@
         document.getElementById("ITB").disabled = false;
         document.getElementById("SP1").style.display = "none";
       });
-    }
+  }
 
   function import_ttl(collection = "n4o") {
     var req = {
@@ -117,6 +144,17 @@
       .then(response => response.json())
       .then(json => console.log(json))
       .catch(err => console.error(err))
+  }
+
+  function uploadTurtle(form) {
+    var fileInput = form.file;
+    var file = fileInput.files[0];
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var content = e.target.result;
+      rdfEditor.setValue(content);
+    };
+    reader.readAsText(file);
   }
 
   reset_editors();
