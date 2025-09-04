@@ -40,33 +40,17 @@
     </div>
   </div>
   <div class="alert alert-info" role="alert">
-    <h4 class="alert-heading">Hello {{user['username']}}, welcome to the N4O-KG workshop!
-      <a href="/logout">Log out</a>
+    <h4 class="alert-heading">
+      Hello {{user['username']}}, welcome to the N4O-KG workshop. Your collection index is "{{ user['index'] }}".&nbsp;&nbsp; <a href="/logout">Log out</a>
     </h4>
-    <hr>
-    <div class="mb-3">
-
-    </div>
-    {% if error %}
-    <div class="mb-3">
-      <label for="ETA1" class="form-label">Error:</label>
-      <textarea class="form-control" id="ETA1" rows="5" readonly>{{ error }}</textarea>
-    </div>
-    {% endif %}
-
-    {% if success %}
-    <div class="mb-3">
-      <label for="RTA1" class="form-label">Result:</label>
-      <textarea class="form-control" id="RTA1" rows="5" readonly>{{ success }}</textarea>
-    </div>
-    {% endif %}
   </div>
   <div id="app" class=".container-fluid" user_data="{{ user['profile_data'] }}" coll_index="{{ user['index'] }}">
+
     <div class="row">
       <div class="col">
         <h4>Lido source (xml)</h4>
         <p>
-          <button type="button" class="btn btn-primary btn-sm" onclick="reset_editors()" id="REB">Reset</button>&nbsp;
+          <button type="button" class="btn btn-primary btn-sm" onclick="reset_editors()" id="REB">Reset</button>
           <button type="button" class="btn btn-danger btn-sm" onclick="convert_lido()" id="CLB">Convert</button>
         <div class="spinner-border text-primary" role="status" id="SP1"></div>
         </p>
@@ -78,7 +62,6 @@
           <button type="button" class="btn btn-danger btn-sm" onclick="import_ttl()" id="ITB">Import</button>
           <button type="button" class="btn btn-primary btn-sm" onclick="rdfEditor.setValue('')" id="ITB">Clear</button>
           <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadFile">Upload file</button>
-          The collection index is "{{ user['index'] }}"&nbsp;
         </p>
         <div id="rdfEditor" style="height:600px"></div>
       </div>
