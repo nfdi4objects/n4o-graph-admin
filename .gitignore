@@ -175,3 +175,4 @@ cython_debug/
 upload.*
 static/node_modules/
 users.yaml
+tmp/
