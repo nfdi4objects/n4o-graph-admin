@@ -62,6 +62,7 @@
           <button type="button" class="btn btn-danger btn-sm" onclick="import_ttl()" id="ITB">Import</button>
           <button type="button" class="btn btn-primary btn-sm" onclick="rdfEditor.setValue('')" id="ITB">Clear</button>
           <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadFile">Upload file</button>
+          <div class="spinner-border text-primary" role="status" id="SP2"></div>
         </p>
         <div id="rdfEditor" style="height:600px"></div>
       </div>
@@ -71,6 +72,7 @@
 </body>
 <script>
   document.getElementById("SP1").style.display = "none";
+  document.getElementById("SP2").style.display = "none";
 
   function makeEditor(label, style = "ace/theme/monokai", fmt = "ace/mode/xml") {
     // Returns an ace editor object
@@ -115,6 +117,7 @@
   }
 
   function import_ttl(collection = "n4o") {
+    document.getElementById("SP2").style.display = "inline-block";
     var req = {
       method: 'POST',
       headers: {
@@ -127,6 +130,9 @@
       .then(response => response.json())
       .then(json => console.log(json))
       .catch(err => console.error(err))
+     .finally(() => {
+        document.getElementById("SP2").style.display = "none";
+      });
   }
 
   function uploadTurtle(form) {

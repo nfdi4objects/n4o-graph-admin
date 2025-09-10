@@ -12,7 +12,7 @@ logging.basicConfig(filename='app.log', level=logging.DEBUG)
 
 sparql_url = 'http://fuseki:3030/n4o'
 def lido2rdf_url(): return f'http://converter:5000/convert'
-def importer_url(coll): return f'http://importer:5020/collection/import/{coll}'
+def importer_url(coll): return f'http://importer:5020/collection/{coll}/load'
 
 
 app = Flask(__name__, template_folder='templates', static_folder='static', static_url_path='/assets')
@@ -83,7 +83,7 @@ def home():
         collection = 'default'
         if user := find_user(username):
             collection = user['collection'] or 'default'
-        data_dir = './data/'
+        data_dir = './admin_data/'
         with open(data_dir+user['samplefile'], 'r') as f:
             user['profile_data'] = f.read()
         return render_template('index.html', collection=collection, user=jsonify(user).json)
@@ -127,9 +127,10 @@ def import_ttl():
     ''''Import TTL data into the RDF store'''
     if coll := request.json.get('coll_index'):
         if data := request.json['data']:
-            with open(f'./stage/inbox/{coll}/out.ttl', 'w') as f:
-                f.write(data)
-            return requests.post(importer_url(coll)).text
+            fn = f'import_{coll}.ttl'
+            with open(f'./data/{fn}', 'w') as f: f.write(data)
+            res =requests.post(f'http://importer:5020/collection/{coll}/receive?from={fn}')
+            return requests.post(f'http://importer:5020/collection/{coll}/load').text, res.status_code
     return jsonify(message='No data or collection index provided')
 
 
