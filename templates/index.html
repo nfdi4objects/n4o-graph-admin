@@ -41,7 +41,10 @@
   </div>
   <div class="alert alert-info" role="alert">
     <h4 class="alert-heading">
-      Hello {{user['username']}}, welcome to the N4O-KG workshop. Your collection index is "{{ user['index'] }}".&nbsp;&nbsp; <a href="/logout">Log out</a>
+      Hello {{user['username']}}, welcome to the N4O-KG workshop. Your collection index is "{{ user['index'] }}".&nbsp;
+      &nbsp; <a href="/logout">Log out</a>
+      &nbsp; <a href="/toSparql">Sparql page</a>
+      &nbsp; <a href="/toAPI">API page</a>
     </h4>
   </div>
   <div id="app" class=".container-fluid" user_data="{{ user['profile_data'] }}" coll_index="{{ user['index'] }}">

@@ -6,6 +6,7 @@ import requests
 import yaml
 import hashlib
 import logging
+from urllib.parse import urlparse
 
 logging.basicConfig(filename='app.log', level=logging.DEBUG)
 
@@ -114,7 +115,18 @@ def logout():
     response.delete_cookie('username')
     return response
 
+@app.route('/toSparql',  methods=['GET', 'POST'])
+def toSparql():
+    '''Call sparql UI service'''
+    host = urlparse(request.host).path.split(':')[0]
+    return redirect(f'http://{host}:8000/sparql') #OK
 
+@app.route('/toAPI',  methods=['GET', 'POST'])
+def toAPI():
+    '''Call sparql UI service'''
+    host = urlparse(request.host).path.split(':')[0]
+    return redirect(f'http://{host}:5020') #OK
+   
 @app.route('/convert_lido', methods=['POST'])
 def convert_lido():
     ''''Convert LIDO XML to RDF using the external service'''
