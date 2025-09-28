@@ -9,6 +9,7 @@ import logging
 from urllib.parse import urlparse
 
 logging.basicConfig(filename='app.log', level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 sparql_url = 'http://fuseki:3030/n4o'
@@ -115,23 +116,26 @@ def logout():
     response.delete_cookie('username')
     return response
 
+def lhost():
+    return urlparse(request.host).path.split(':')[0]
+
 @app.route('/toSparql',  methods=['GET', 'POST'])
 def toSparql():
     '''Call sparql UI service'''
-    host = urlparse(request.host).path.split(':')[0]
-    return redirect(f'http://{host}:8000/sparql') #OK
+    return redirect(f'http://{lhost()}:8000/sparql') #OK
 
 @app.route('/toAPI',  methods=['GET', 'POST'])
 def toAPI():
     '''Call sparql UI service'''
-    host = urlparse(request.host).path.split(':')[0]
-    return redirect(f'http://{host}:5020') #OK
+    return redirect(f'http://{lhost()}:5020') #OK
    
 @app.route('/convert_lido', methods=['POST'])
 def convert_lido():
     ''''Convert LIDO XML to RDF using the external service'''
     #  curl -X POST  -H "Content-Type: application/json" -d '{"data":"<lido/>", "format":"nt"}' converter:5000/runMappings
-    return requests.post(lido2rdf_url(), data=request.json['data']).text
+    data = request.json['data']
+    logger.info(f'Converting LIDO 2 data of length {len(data)}')
+    return requests.post(f'http://{lhost()}:5000/convert', data=data).text
 
 
 @app.route('/import_ttl', methods=['POST'])
