@@ -1,7 +1,6 @@
 FROM nikolaik/python-nodejs:latest
 
 WORKDIR /app
-RUN apt-get update && apt-get install -y procps
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 
