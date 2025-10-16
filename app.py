@@ -8,13 +8,19 @@ import hashlib
 import logging
 from urllib.parse import urlparse
 
-logging.basicConfig(filename='app.log', level=logging.DEBUG)
+os.makedirs('logs',exist_ok=True)
+logfile = 'logs/app.log'
+
+if os.path.exists(logfile): os.remove(logfile)
+logging.basicConfig(filename=logfile, level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 sparql_url = 'http://fuseki:3030/n4o'
-def lido2rdf_url(): return f'http://converter:5000/convert'
-def importer_url(coll): return f'http://importer:5020/collection/{coll}/load'
+def lido2rdf_url(): 
+    return f'http://converter:5000/convert'
+def importer_url(coll): 
+    return f'http://importer:5020/collection/{coll}'
 
 
 app = Flask(__name__, template_folder='templates', static_folder='static', static_url_path='/assets')
@@ -84,10 +90,12 @@ def home():
         username = request.cookies.get('username')
         collection = 'default'
         if user := find_user(username):
-            collection = user['collection'] or 'default'
-        data_dir = './admin_data/'
-        with open(data_dir+user['samplefile'], 'r') as f:
-            user['profile_data'] = f.read()
+            collection = user.get('collection', 'default')
+            user['profile_data'] = '<empty/>'
+            if s_file := user.get('samplefile'):
+                data_dir = './admin_data/'
+                with open(data_dir+s_file, 'r') as f:
+                    user['profile_data'] = f.read()
         return render_template('index.html', collection=collection, user=jsonify(user).json)
     else:
         return redirect(url_for('login'))
@@ -134,19 +142,22 @@ def convert_lido():
     ''''Convert LIDO XML to RDF using the external service'''
     #  curl -X POST  -H "Content-Type: application/json" -d '{"data":"<lido/>", "format":"nt"}' converter:5000/runMappings
     data = request.json['data']
-    logger.info(f'Converting LIDO 2 data of length {len(data)}')
+    logger.info(f'Converting Lido data ({len(data)} bytes)')
     return requests.post(f'http://{lhost()}:5000/convert', data=data).text
 
 
 @app.route('/import_ttl', methods=['POST'])
 def import_ttl():
     ''''Import TTL data into the RDF store'''
-    if coll := request.json.get('coll_index'):
+    if collection_index := request.json.get('coll_index'):
         if data := request.json['data']:
-            fn = f'import_{coll}.ttl'
-            with open(f'./data/{fn}', 'w') as f: f.write(data)
-            res =requests.post(f'http://importer:5020/collection/{coll}/receive?from={fn}')
-            return requests.post(f'http://importer:5020/collection/{coll}/load').text, res.status_code
+            # Copy data to file, then call importer services receive and load
+            import_file = f'import_{collection_index}.ttl'
+            with open(f'./data/{import_file}', 'w') as f: f.write(data)
+            service = importer_url(collection_index)
+            res =requests.post(f'{service}/receive?from={import_file}')
+            logger.info(f'Importing data by {service}, response: {res.status_code}')
+            return requests.post(f'{service}/load').text, res.status_code
     return jsonify(message='No data or collection index provided')
 
 
@@ -159,7 +170,7 @@ def read_yaml(fname):
 
 if __name__ == '__main__':
     parser = AP.ArgumentParser()
-    parser.add_argument('-w', '--wsgi', action=AP.BooleanOptionalAction, help="Use WSGI server")
+    parser.add_argument('-w', '--wsgi', action='store_true', help="Use WSGI server")
     parser.add_argument('-p', '--port', type=int, default=5010, help="Server port")
     parser.add_argument('-c', '--config', type=str, default="config.yaml", help="Config file")
     args = parser.parse_args()
@@ -168,7 +179,11 @@ if __name__ == '__main__':
     if config_data := read_yaml(args.config):
         sparql_url = config_data["fuseki-server"]["uri"]
 
-    if user_data := read_yaml('users.yaml'):
+    user_data = read_yaml('users.yaml')
+    if not user_data:
+        user_data = read_yaml('admin.yaml')
+    
+    if user_data:
         users = user_data['users']
     else:
         quit(stderr='No users found in users.yaml')
