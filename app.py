@@ -124,18 +124,15 @@ def logout():
     response.delete_cookie('username')
     return response
 
-def lhost():
-    return urlparse(request.host).path.split(':')[0]
-
 @app.route('/toSparql',  methods=['GET', 'POST'])
 def toSparql():
     '''Call sparql UI service'''
-    return redirect(f'http://{lhost()}:8000/sparql') #OK
+    return redirect(f'http://localhost:8000/sparql') #OK
 
 @app.route('/toAPI',  methods=['GET', 'POST'])
 def toAPI():
     '''Call sparql UI service'''
-    return redirect(f'http://{lhost()}:5020') #OK
+    return redirect(f'http://localhost:5020') #OK
    
 @app.route('/convert_lido', methods=['POST'])
 def convert_lido():
@@ -143,7 +140,7 @@ def convert_lido():
     #  curl -X POST  -H "Content-Type: application/json" -d '{"data":"<lido/>", "format":"nt"}' converter:5000/runMappings
     data = request.json['data']
     logger.info(f'Converting Lido data ({len(data)} bytes)')
-    return requests.post(f'http://{lhost()}:5000/convert', data=data).text
+    return requests.post(f'http://converter:5000/convert', data=data).text
 
 
 @app.route('/import_ttl', methods=['POST'])
