@@ -17,8 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 sparql_url = 'http://fuseki:3030/n4o'
-def lido2rdf_url(): 
-    return f'http://converter:5000/convert'
 def importer_url(coll): 
     return f'http://importer:5020/collection/{coll}'
 
@@ -57,46 +55,13 @@ def import_file(storage_file, collection='default'):
 @app.route('/info')
 def info():
     '''Display information about the RDF store and users'''
-    return f'Info\nSPARQL = {sparql_url}\nUsers = {[k['username'] for k in users]}\n'
-
-
-@app.route('/upload', methods=['POST'])
-def upload():
-    '''Handle file upload and import into the RDF store'''
-    err_msg = 'Import failed'
-    success_msg = coll = None
-    if storage_file := request.files.get('file'):
-        if username := request.cookies.get('username', 'www'):
-            coll = request.form['collection'] or 'Default'
-            if user := find_user(username):
-                user['collection'] = coll
-            success_msg, err_msg = import_file(storage_file, coll)
-    return render_template('index.html', success=success_msg, error=err_msg, collection=coll)
-
-
-@app.route('/uploadC/<collection>', methods=['POST'])
-def uploadC(collection):
-    '''Handle file upload and import REST API'''
-    success_msg = 'Import failed'
-    if storage_file := request.files['file']:
-        success_msg, _ = import_file(storage_file, collection)
-    return f'message:{success_msg}'
-
+    return f'Info: SPARQL = {sparql_url}'
 
 @app.route('/')
 def home():
     '''Render the home page'''
     if 'username' in request.cookies:
-        username = request.cookies.get('username')
-        collection = 'default'
-        if user := find_user(username):
-            collection = user.get('collection', 'default')
-            user['profile_data'] = '<empty/>'
-            if s_file := user.get('samplefile'):
-                data_dir = './admin_data/'
-                with open(data_dir+s_file, 'r') as f:
-                    user['profile_data'] = f.read()
-        return render_template('index.html', collection=collection, user=jsonify(user).json)
+        return render_template('index.html', conn=jsonify('http://localhost:3030/n4o').json)
     else:
         return redirect(url_for('login'))
 
@@ -123,40 +88,6 @@ def logout():
     response = make_response(redirect(url_for('login')))
     response.delete_cookie('username')
     return response
-
-@app.route('/toSparql',  methods=['GET', 'POST'])
-def toSparql():
-    '''Call sparql UI service'''
-    return redirect(f'http://localhost:8000/sparql') #OK
-
-@app.route('/toAPI',  methods=['GET', 'POST'])
-def toAPI():
-    '''Call sparql UI service'''
-    return redirect(f'http://localhost:5020') #OK
-   
-@app.route('/convert_lido', methods=['POST'])
-def convert_lido():
-    ''''Convert LIDO XML to RDF using the external service'''
-    #  curl -X POST  -H "Content-Type: application/json" -d '{"data":"<lido/>", "format":"nt"}' converter:5000/runMappings
-    data = request.json['data']
-    logger.info(f'Converting Lido data ({len(data)} bytes)')
-    return requests.post(f'http://converter:5000/convert', data=data).text
-
-
-@app.route('/import_ttl', methods=['POST'])
-def import_ttl():
-    ''''Import TTL data into the RDF store'''
-    if collection_index := request.json.get('coll_index'):
-        if data := request.json['data']:
-            # Copy data to file, then call importer services receive and load
-            import_file = f'import_{collection_index}.ttl'
-            with open(f'./data/{import_file}', 'w') as f: f.write(data)
-            service = importer_url(collection_index)
-            res =requests.post(f'{service}/receive?from={import_file}')
-            logger.info(f'Importing data by {service}, response: {res.status_code}')
-            return requests.post(f'{service}/load').text, res.status_code
-    return jsonify(message='No data or collection index provided')
-
 
 def read_yaml(fname):
     '''Read a YAML file and return the data'''

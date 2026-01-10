@@ -3,153 +3,106 @@
 <head>
   <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Administration interface for the N4O Knowledge Graph">
-
+  <script src="assets/node_modules/vue/dist/vue.global.js"></script>
   <script src="assets/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
   <script src="assets/node_modules/jquery/dist/jquery.min.js"></script>
-  <script src="assets/node_modules/ace-builds/src-min/ace.js"></script>
 
   <link rel="stylesheet" href="assets/style.css">
   <link rel="stylesheet" href="assets/node_modules/bootstrap/dist/css/bootstrap.min.css">
 
-  <title>Knowledge Graph Workshop</title>
+  <title>N4O-KG Administration</title>
 </head>
 
+<script>
+  function indexFromURL(url) {
+    return parseInt(url.split('/').pop());
+  }
+</script>
+
 <body>
-  <!-- Upload dialog for X3ML files (modal)-->
-  <div class="modal fade" id="uploadFile" tabindex="-1" aria-labelledby="uploadFileLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="uploadFileLabel">Upload turtle file</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <form action="javascript:;" onsubmit="uploadTurtle( this )">
-            <div class="input-group mb-3">
-              <input type="file" class="form-control" name="file" accept=".ttl" required />
-            </div>
-            <div class="input-group mb-3">
-              <input type="submit" class="btn btn-primary" data-bs-dismiss="modal" value="Submit" />&nbsp;
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Dimiss</button>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-        </div>
-      </div>
-    </div>
-  </div>
   <div class="alert alert-info" role="alert">
     <h4 class="alert-heading">
-      Hello {{user['username']}}, welcome to the N4O-KG workshop. Your collection index is "{{ user['index'] }}".&nbsp;
-      &nbsp; <a href="/logout">Log out</a>
-      &nbsp; <a href="/toSparql">Sparql page</a>
-      &nbsp; <a href="/toAPI">API page</a>
+      Welcome to the N4O-KG Administration". <a href="/logout">Log out</a>
     </h4>
   </div>
-  <div id="app" class=".container-fluid" user_data="{{ user['profile_data'] }}" coll_index="{{ user['index'] }}">
+  <div id="app" class=".container-fluid" user_data="{{conn}}">
 
-    <div class="row">
-      <div class="col">
-        <h4>Lido source (xml)</h4>
-        <p>
-          <button type="button" class="btn btn-primary btn-sm" onclick="reset_editors()" id="REB">Reset</button>
-          <button type="button" class="btn btn-danger btn-sm" onclick="convert_lido()" id="CLB">Convert</button>
-        <div class="spinner-border text-primary" role="status" id="SP1"></div>
-        </p>
-        <div id="lidoEditor" style="height:600px"></div>
+    <div class="row" id="RowAll">
+
+      <div id="list-example" class="list-group">
+        <a class="list-group-item list-group-item-action" @click="readCollection(c)" :col="c" v-for="c in collectionIDs">Collection ${c}$</a>
       </div>
-      <div class="col">
-        <h4>RDF Output (ttl)</h4>
-        <p>
-          <button type="button" class="btn btn-danger btn-sm" onclick="import_ttl()" id="ITB">Import</button>
-          <button type="button" class="btn btn-primary btn-sm" onclick="rdfEditor.setValue('')" id="ITB">Clear</button>
-          <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadFile">Upload file</button>
-          <div class="spinner-border text-primary" role="status" id="SP2"></div>
-        </p>
-        <div id="rdfEditor" style="height:600px"></div>
+      <div class="col" id="ColumData">
+        <div class="Row" id="RowDataHeader"></div>
+        <div class="Row" id="RowDataBody"></div>
       </div>
     </div>
   </div>
 
 </body>
-<script>
-  document.getElementById("SP1").style.display = "none";
-  document.getElementById("SP2").style.display = "none";
 
-  function makeEditor(label, style = "ace/theme/monokai", fmt = "ace/mode/xml") {
-    // Returns an ace editor object
-    var ed = ace.edit(label);
-    ed.setTheme(style);
-    ed.session.setMode(fmt);
-    ed.setPrintMarginColumn(-1);
-    return ed;
-  }
+<script>
+
+
 
   var app_elem = document.getElementById('app');
-  var user_data = app_elem.getAttribute('user_data', 'None');
-  var coll_index = app_elem.getAttribute('coll_index', 'None');
-  // Creator editors
-  var lidoEditor = makeEditor("lidoEditor");
-  var rdfEditor = makeEditor("rdfEditor", "", "ace/mode/turtle");
+  var user_data = app_elem.getAttribute('user_data', '');
+  var collections = [];
 
-  function reset_editors() {
-    lidoEditor.setValue(user_data);
-    rdfEditor.setValue('');
-  }
+   const collectionURL = "https://graph.nfdi4objects.net/collection/";
 
-  function convert_lido() {
-    document.getElementById("ITB").disabled = true;
-    document.getElementById("SP1").style.display = "inline-block";
-    rdfEditor.setValue('');
-    fetch('/convert_lido', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ "data": lidoEditor.getValue(), "format": "turtle" })
-    })
-      .then(response => response.text())
-      .then(text => rdfEditor.setValue(text))
-      .catch(err => console.error(err))
-      .finally(() => {
-        document.getElementById("ITB").disabled = false;
-        document.getElementById("SP1").style.display = "none";
-      });
-  }
 
-  function import_ttl(collection = "n4o") {
-    document.getElementById("SP2").style.display = "inline-block";
-    var req = {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ "data": rdfEditor.getValue(), "coll_index": coll_index })
-    }
-    fetch('/import_ttl', req)
+  function query_fuseki(query_str, f) {
+    let req_str = `${user_data}?query=${query_str}`;
+    fetch(req_str, { method: 'GET', headers: { 'Accept': 'application/sparql-results+json' } })
       .then(response => response.json())
-      .then(json => console.log(json))
+      .then(js => f(js))
       .catch(err => console.error(err))
-     .finally(() => {
-        document.getElementById("SP2").style.display = "none";
+      .finally(() => { console.log('fetch done'); });
+  }
+
+  var app = Vue.createApp({
+    data() {
+      return {
+        collectionIDs: [],
+        selectedCollection: null
+      }
+    },
+    delimiters: ["${", "}$"], // for global
+    compilerOptions: { delimiters: ["${", "}$"] }, // for standalone
+    methods: {
+      readCollection(n) {
+        let s = `<${collectionURL}${n}>`
+        query_fuseki(`SELECT * WHERE { ${s} ?p ?o .}`,
+          response => {
+            console.log(response.results.bindings);
+          });
+      },
+    },
+    mounted() {
+      document.onreadystatechange = () => {
+        if (document.readyState == "complete") {
+          getCollectionList();
+        }
+      }
+    },
+    created() {
+      console.log('created');
+    }
+  }).mount('#app');
+
+ 
+  function getCollectionList() {
+    const p = "<http://purl.org/dc/terms/isPartOf>";
+    const o = `<${collectionURL}>`
+    query_fuseki(`SELECT * WHERE { ?s ${p} ${o} .} `,
+      response => {
+        let IDs = response.results.bindings.map(x => x.s.value);
+        IDs.sort((a, b) => indexFromURL(a) - indexFromURL(b));
+        app.collectionIDs = IDs.map(x => indexFromURL(x));
       });
   }
 
-  function uploadTurtle(form) {
-    var fileInput = form.file;
-    var file = fileInput.files[0];
-    var reader = new FileReader();
-    reader.onload = function (e) {
-      var content = e.target.result;
-      rdfEditor.setValue(content);
-    };
-    reader.readAsText(file);
-  }
-
-  reset_editors();
 </script>
 
 </html>
