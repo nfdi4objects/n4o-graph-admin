@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+<div id="app" class=".container-fluid">
+
+  <div class="modal fade" ref="modal" id="collectionInfoMDialog" data-keyboard="false" data-backdrop="static" style="overflow-y: scroll; height:400px; width: 100%;">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Collection information</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          ${ collectionInfo }$
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Okay</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload dialog for RDF files (modal)-->
+  <div class="modal fade" id="uploadRDFModal" tabindex="-1" aria-labelledby="uploadRDFLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="uploadRDFLabel">Uploading RDF files</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form novalidate @submit.prevent="uploadRDF">
+            <div class="input-group mb-3">
+              <input type="file" class="form-control" @change="saveRDFUrl" accept=".ttl,.nt,.xml,.n3" />&nbsp;
+              <input type="submit" class="btn btn-primary" data-bs-dismiss="modal" value="Open" />
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" id="rowAll">
+    <div class="col-4" id="columNav">
+      <div style="text-align: center;">
+        <div>
+          <label>Collections:
+            <button class="btn btn-primary btn-sm" @click="addCollection()"> + </button>&nbsp;
+            <button class="btn btn-primary btn-sm" @click="delCollection()"> - </button>&nbsp;
+          </label>
+        </div>
+      </div>
+      <br>
+      <div id="list-example" class="list-group" style="overflow:scroll; height:600px;">
+        <a class="list-group-item list-group-item-action" @click="selectCollection(c.id)" :col="c.id" :title="c.name" v-for="c in collections" style="text-align: center;">
+          ${c.name}$ <div>(No. ${c.id}$)</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="col-8" id="columData">
+      <div v-if="displayCollection != null">
+        <h5>Collection ${displayCollection.id}$</h5>
+        <label>Name: <input class="form-control" type="text" v-model="displayCollection.name" style="width:700px;" /></label><br>
+        <label>URL: <input class="form-control" type="text" v-model="displayCollection.url" style="width:700px;" /></label><br>
+        <label>URI: <input class="form-control" type="text" v-model="displayCollection.uri" style="width:700px;" disabled /></label><br>
+        <label>License: <input class="form-control" type="text" v-model="displayCollection.license" style="width:700px;" /></label><br>
+        <label>Database: <input class="form-control" type="text" v-model="displayCollection.db" style="width:700px;" /></label><br>
+        <label>Part of: <input class="form-control" type="text" v-model="displayCollection.partOf[0]" style="width:700px;" /></label><br><br>
+        <label>Types:
+          <button class="btn btn-primary btn-sm" @click="addType()"> + </button>&nbsp;
+          <button class="btn btn-primary btn-sm" @click="delType()"> - </button>
+        </label><br>
+        <div>
+          <ol>
+            <li v-for="(item, i) in displayCollection.type">
+              <label><input class="form-control" type="text" v-model="displayCollection.type[i]" style="width:700px;" /></label><br>
+            </li>
+          </ol>
+        </div>
+        <div>
+          <button class="btn btn-primary" @click="putCollection(displayCollection)">Submit changes</button>&nbsp;
+          <button class="btn btn-primary" @click="getCollection(displayCollection.id)">Reset changes</button>&nbsp;
+          <button class="btn btn-primary" @click="showDetails(displayCollection.uri)">Show data details</button>&nbsp;
+          <button class="btn btn-primary" @click="deleteCollData(displayCollection.id)">Delete data</button>&nbsp;
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadRDFModal">Upload data</button>
+          <div class="spinner-border text-primary" role="status" id="SP1"></div>
+        </div>
+      </div>
+      <div v-else>
+        <h5>Please select a collection from the left side.</h5>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  showProgess(false);
+  var app_elem = document.getElementById('app');
+  var app = Vue.createApp(makeAppData()).mount('#app');
+</script>
+
+{% endblock %}
