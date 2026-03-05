@@ -50,19 +50,22 @@ function showProgess(on = false) {
 }
 
 /// Import TTL data into the KG
-function postCollectionData(uri, data, suffix) {
+function postCollectionData(index,file) {
     showProgess(true);
-    var req = {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/json, text/plain, */*', 'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ "data": data, "uri": uri, suffix: suffix })
-    }
-    fetch('/postCollectionData', req)
+    var data = new FormData();
+    data.append('file', file, file.filename);
+    data.append('index', index);
+    
+    var req = { method: 'POST', body: data, };
+    fetch('/postCollectionData/'+index, req)
         .then(response => response.json())
-        .then(json => console.log(json))
-        .catch(err => console.error(err))
+        .then(json => {
+            console.log(json);
+            if (json.code) {
+                alert(`Error ${json.code}:\n\t${json.message} at line ${json.position.linecol}`);
+            }
+        })
+        .catch(err => alert(err))
         .finally(() => {
             showProgess(false);
         });
@@ -170,12 +173,8 @@ function makeAppData() {
                 }
                 else {
                     const file0 = this.rdfFiles[0]
-                    const textPromise = file0.text();
-                    textPromise.then((data) => {
-                        let suffix = file0.name.split('.').pop().toLowerCase();
-                        postCollectionData(this.displayCollection.uri, data, suffix);
-                        this.rdfFiles = [];
-                    });
+                    postCollectionData(this.displayCollection.id, file0);
+                    this.rdfFiles = [];
                 }
             },
             putCollection(collection) {

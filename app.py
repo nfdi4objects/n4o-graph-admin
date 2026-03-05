@@ -10,8 +10,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 LOG_FILE = 'app.log'
-IMPORTER_URL  ='http://importer:5020'
-FUSEKI_URL  ='http://fuseki:3030'
+IMPORTER_HOST = 'http://importer:5020'
+FUSEKI_HOST = 'http://fuseki:3030'
 
 
 logging.basicConfig(filename=LOG_FILE, level=logging.INFO)
@@ -86,7 +86,7 @@ def logout():
 @app.route('/fuseki', methods=['post'])
 def fuseki():
     if data := request.json.get('data'):
-        res = requests.post(f'{FUSEKI_URL}/n4o?query={data}')
+        res = requests.post(f'{FUSEKI_HOST}/n4o?query={data}')
         return jsonify(res.text), res.status_code
 
 
@@ -95,7 +95,7 @@ def importer(subpath):
     '''Forwards requests to the importer service'''
     res = requests.request(
         method=request.method,
-        url=f'{IMPORTER_URL}/{subpath}',  # Forward to importer service
+        url=f'{IMPORTER_HOST}/{subpath}',  # Forward to importer service
         headers={k: v for k, v in request.headers if k.lower() != 'host'},  # Exclude 'host' header
         data=request.get_data(),
         cookies=request.cookies,
@@ -110,21 +110,22 @@ def importer(subpath):
     return response
 
 
-@app.route('/postCollectionData', methods=['POST'])
-def postCollectionData():
-    '''Posts new collection data. Recent data will be deleted.'''
-    if uri := request.json.get('uri'):
-        index = urlparse(uri).path.strip('/').split('/')[-1]
-        if data := request.json['data']:
+@app.route('/postCollectionData/<int:coll_index>', methods=['POST'])
+def postCollectionData(coll_index):
+    '''Upload new collection data. Recent data will be deleted.'''
+    if coll_index > 0:
+        if file := request.files.get('file'):
             # Copy data to file, then call importer services receive and add
-            suffix = request.json.get("suffix", "ttl")
-            import_file = f'import_{index}.{suffix}'
-            Path(f'./data').mkdir(exist_ok=True)
-            Path(f'./data/{import_file}').write_text(data)
-            service = f'{IMPORTER_URL}/collection/{index}'
-            res = requests.post(f'{service}/receive?from={import_file}')
-            res = requests.post(f'{service}/load')
-            #res = requests.post(f'{service}/add')
+            # logger.info(f'name = {file.filename} index = {index}')
+            buffer_name = f'collection_{coll_index}{Path(file.filename).suffix}'
+            file.save(f'./data/{buffer_name}')
+
+            service_url = f'{IMPORTER_HOST}/collection/{coll_index}'
+            res = requests.post(f'{service_url}/receive?from={buffer_name}')
+            if res.ok:
+                res = requests.post(f'{service_url}/load')
+                # TODO res = requests.post(f'{service}/add') #Not supporte
+            Path(f'./data/{buffer_name}').unlink(missing_ok=False)
             return res.text, res.status_code
     return jsonify(message='No data or collection index provided')
 
