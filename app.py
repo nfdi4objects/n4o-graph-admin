@@ -115,16 +115,17 @@ def postCollectionData(coll_index):
     '''Upload new collection data. Recent data will be deleted.'''
     if coll_index > 0:
         if file := request.files.get('file'):
-            # Copy data to file, then call importer services receive and add
-            # logger.info(f'name = {file.filename} index = {index}')
+            add_mode = request.form.get('add_mode', 'false')
+            # Copy data to file, then call importer services receive and add/load
+            # logger.info(f'name = {file.filename} add-mode = {add_mode}')
             buffer_name = f'collection_{coll_index}{Path(file.filename).suffix}'
             file.save(f'./data/{buffer_name}')
 
             service_url = f'{IMPORTER_HOST}/collection/{coll_index}'
             res = requests.post(f'{service_url}/receive?from={buffer_name}')
             if res.ok:
-                res = requests.post(f'{service_url}/load')
-                # TODO res = requests.post(f'{service}/add') #Not supporte
+                cmd_str = 'add' if add_mode == 'true' else 'load'
+                res = requests.post(f'{service_url}/{cmd_str}')
             Path(f'./data/{buffer_name}').unlink(missing_ok=False)
             return res.text, res.status_code
     return jsonify(message='No data or collection index provided')

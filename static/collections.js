@@ -50,11 +50,12 @@ function showProgess(on = false) {
 }
 
 /// Import TTL data into the KG
-function postCollectionData(index,file) {
+function postCollectionData(index,file,add_mode=false) {
     showProgess(true);
     var data = new FormData();
     data.append('file', file, file.filename);
     data.append('index', index);
+    data.append('add_mode', add_mode);
     
     var req = { method: 'POST', body: data, };
     fetch('/postCollectionData/'+index, req)
@@ -79,6 +80,7 @@ function makeAppData() {
                 displayCollection: null,
                 collectionInfo: 'No info.',
                 rdfFiles: [],
+                add_mode: false,
             }
         },
         delimiters: ["${", "}$"], // for global
@@ -173,7 +175,7 @@ function makeAppData() {
                 }
                 else {
                     const file0 = this.rdfFiles[0]
-                    postCollectionData(this.displayCollection.id, file0);
+                    postCollectionData(this.displayCollection.id, file0, this.add_mode);
                     this.rdfFiles = [];
                 }
             },
