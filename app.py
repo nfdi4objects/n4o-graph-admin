@@ -10,8 +10,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 LOG_FILE = 'app.log'
-IMPORTER_HOST = 'http://importer:5020'
-FUSEKI_HOST = 'http://fuseki:3030'
+GRIMPO = os.getenv('GRIMPO', 'http://importer:5020')
+SPARQL = os.getenv('SPARQL', 'http://fuseki:3030/n4o')
 
 
 logging.basicConfig(filename=LOG_FILE, level=logging.INFO)
@@ -86,7 +86,7 @@ def logout():
 @app.route('/fuseki', methods=['post'])
 def fuseki():
     if data := request.json.get('data'):
-        res = requests.post(f'{FUSEKI_HOST}/n4o?query={data}')
+        res = requests.post(f'{SPARQL}?query={data}')
         return jsonify(res.text), res.status_code
 
 
@@ -95,7 +95,7 @@ def importer(subpath):
     '''Forwards requests to the importer service'''
     res = requests.request(
         method=request.method,
-        url=f'{IMPORTER_HOST}/{subpath}',  # Forward to importer service
+        url=f'{GRIMPO}/{subpath}',  # Forward to importer service
         headers={k: v for k, v in request.headers if k.lower() != 'host'},  # Exclude 'host' header
         data=request.get_data(),
         cookies=request.cookies,
@@ -121,7 +121,7 @@ def postCollectionData(coll_index):
             buffer_name = f'collection_{coll_index}{Path(file.filename).suffix}'
             file.save(f'./data/{buffer_name}')
 
-            service_url = f'{IMPORTER_HOST}/collection/{coll_index}'
+            service_url = f'{GRIMPO}/collection/{coll_index}'
             res = requests.post(f'{service_url}/receive?from={buffer_name}')
             if res.ok:
                 cmd_str = 'add' if add_mode == 'true' else 'load'
