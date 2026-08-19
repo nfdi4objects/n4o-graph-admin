@@ -1,6 +1,4 @@
-const { data } = require("jquery");
-
-const INFO_ITEMS = "?s ?name ?url ?id ?partOf ?license"; /// items to select in SPARQL query
+const INFO_ITEMS = "?s ?name ?url ?id ?license"; /// items to select in SPARQL query
 
 /// Create SPARQL query to get all collections data
 function makeCollectionQuery() {
@@ -12,7 +10,6 @@ function makeCollectionQuery() {
       ?s <http://xmlns.com/foaf/0.1/homepage> ?url .
       ?s <http://www.w3.org/2004/02/skos/core%23notation> ?id .
       ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns%23type> ?type .
-      ?s <http://purl.org/dc/terms/isPartOf> ?partOf .
       OPTIONAL { ?s <http://purl.org/dc/terms/license> ?license . }
      }
      GROUP by ${INFO_ITEMS}`;
@@ -58,10 +55,8 @@ function binding2item(b) {
     id: parseInt(b.id.value),
     name: b.name.value,
     url: b.url.value,
-    partOf: b.partOf.value,
     type: b.types.value.split(";"),
     license: b.license ? b.license.value : '',
-    db: '',
     uri: b.s.value
   };
   return item;

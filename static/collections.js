@@ -1,12 +1,7 @@
-const { log } = require("node:console");
-
 /// Ensure collection has mandatory fields
 function fixCollection(collection) {
     let coll = collection
     if (!('type' in coll)) { coll.type = []; }
-    if (!('db' in coll)) { coll.db = ''; }
-    if (!('url' in coll)) { coll.url = ''; }
-    if (!('access' in coll)) { coll.access = []; }
     return coll;
 };
 
@@ -31,16 +26,16 @@ function getCollections() {
 function makeCollection(id_str, collection_tpl) {
     const collection = collection_tpl ? { ...collection_tpl } : {
         type: [],
-        access: [],
-        partOf: [],
-        url: '',
-        db: '',
-        license: '',
     };
     if (collection_tpl) {
         collection.id = id_str;
         collection.name = `New Collection ${id_str}`;
         collection.uri = `https://graph.nfdi4objects.net/collection/${id_str}`;
+    }
+    for (let key in collection) { // remove empty fields
+        if (collection[key] === '') {
+            delete collection[key]
+        }
     }
     return collection
 }
