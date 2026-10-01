@@ -62,7 +62,7 @@
       <br>
       <div id="list-example" class="list-group" style="overflow:scroll; height:600px;">
         <a class="list-group-item list-group-item-action" @click="selectCollection(c.id)" :col="c.id" :title="c.name" v-for="c in collections" style="text-align: center;">
-          ${c.name}$ <div>(No. ${c.id}$)</div>
+          ${c.name}$ <div>(ID=${c.id}$)</div>
         </a>
       </div>
     </div>

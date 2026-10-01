@@ -23,21 +23,14 @@ function getCollections() {
         .finally(() => { console.log('fetch collections done'); });
 }
 
-function makeCollection(id_str, collection_tpl) {
-    const collection = collection_tpl ? { ...collection_tpl } : {
+function makeCollection(id_str) {
+    return  {
         type: [],
+        id: id_str,
+        name: `New Collection ${id_str}`,
+        uri : `https://graph.nfdi4objects.net/collection/${id_str}`,
+        db : "Q22661177" // Wikidata Zenodo ID as default
     };
-    if (collection_tpl) {
-        collection.id = id_str;
-        collection.name = `New Collection ${id_str}`;
-        collection.uri = `https://graph.nfdi4objects.net/collection/${id_str}`;
-    }
-    for (let key in collection) { // remove empty fields
-        if (collection[key] === '') {
-            delete collection[key]
-        }
-    }
-    return collection
 }
 
 function showProgess(on = false) {
@@ -87,11 +80,12 @@ function makeAppData() {
 
             delCollection() {
                 /// Remove a type from the collection
-                let N = this.displayCollection ? this.displayCollection.id :this.collections.length
-                let id = prompt('Enter the index of the collection to delete:', N);
-                id = parseInt(id) - 1;
-                if (!isNaN(id) && id >= 0 || id < N) {
-                    let q = this.collections[id];
+                const getIndex = id => this.collections.map(e => e.id).indexOf(id);
+                let userIndex = this.displayCollection ? getIndex(this.displayCollection.id)+1 :this.collections.length
+                userIndex = prompt('Enter the index of the collection to delete:', userIndex);
+                userIndex = parseInt(userIndex) - 1;
+                if (!isNaN(userIndex) && userIndex >= 0 || userIndex < userIndex) {
+                    let q = this.collections[userIndex];
                     //console.log(q.id)
                     fetch(collection_url(q.id), {
                         method: 'DELETE',
@@ -100,11 +94,11 @@ function makeAppData() {
                         .then(response => response.json())
                         .then(data => {
                             console.log(data);
-                            this.collections.splice(id, 1)
+                            this.collections.splice(userIndex, 1)
                             this.displayCollection = null
                         })
                         .catch(err => alert(err))
-                        .finally(() => { console.log(`collection ${id} deleted`); });
+                        .finally(() => { console.log(`collection ${userIndex} deleted`); });
                 }
 
             },
@@ -116,8 +110,7 @@ function makeAppData() {
                 if (N > 0) {
                     new_id = Math.max(...this.collections.map(c => c.id)) + 1;
                 }
-                let lastCollection = N > 0 ? this.collections[N - 1] : null;
-                const new_collection = makeCollection(new_id.toString(), lastCollection)
+                const new_collection = makeCollection(new_id.toString())
 
                 fetch(collection_url(), {
                     method: 'POST',
